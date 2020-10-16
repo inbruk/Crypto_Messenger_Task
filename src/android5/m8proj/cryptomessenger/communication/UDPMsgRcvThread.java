@@ -1,21 +1,23 @@
 package android5.m8proj.cryptomessenger.communication;
 
-import java.io.Closeable;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
-import java.util.*;
 
-public class UDPMsgRcvThread extends Thread implements Closeable {
+import lombok.Getter;
+import lombok.SneakyThrows;
+
+public class UDPMsgRcvThread extends Thread implements Closeable
+{
 
     private int toPort;
     private DatagramSocket socket;
     private byte[] packetBuffer;
 
+    @Getter
     private boolean isReceived;
-    public boolean isReceived() { return isReceived; }
 
+    @Getter
     private CommunicationMessage result;
-    public CommunicationMessage getResult() { return result;  }
 
     public UDPMsgRcvThread(int toPrt) throws SocketException {
         toPort = toPrt;
@@ -25,6 +27,7 @@ public class UDPMsgRcvThread extends Thread implements Closeable {
         packetBuffer = new byte[ CommunicationMessage.MAX_PACKET_BUFF_SIZE ];
     }
 
+    @SneakyThrows
     public void run() {
         DatagramPacket packet = new DatagramPacket(packetBuffer, packetBuffer.length);
         socket.receive(packet);
@@ -40,6 +43,5 @@ public class UDPMsgRcvThread extends Thread implements Closeable {
         packetBuffer = null;
         socket.close();
     }
-
 
 }
