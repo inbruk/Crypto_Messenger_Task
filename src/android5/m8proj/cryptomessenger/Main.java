@@ -1,64 +1,86 @@
 package android5.m8proj.cryptomessenger;
 
+import android5.m8proj.cryptomessenger.communication.*;
+
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.*;
-
-class MyThread extends Thread {
-    private int count = 0;
-    private int mls = 0;
-    private List<String> messageBufferList;
-
-    public MyThread(String name, int ms, List<String> msgBuff) {
-        this.setName(name);
-        mls = ms;
-        messageBufferList = msgBuff;
-    }
-
-    public void run() {
-        while (true) {
-
-            messageBufferList.add( this.getName() + " : " + count );
-
-            try {
-                Thread.sleep(mls);
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
-            }
-
-            count++;
-            if (count>10) break;
-        }
-    }
-}
+import java.util.Scanner;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static <ex> void main(String[] args) throws InterruptedException, SocketException, UnknownHostException {
 
-        List<String>  receivedMessages = new LinkedList<>();
+        int fromPort, toPort;
+        String toAddress;
 
-        MyThread one = new MyThread("one", 1111, receivedMessages);
-        MyThread two = new MyThread("two", 1333, receivedMessages);
-        MyThread three = new MyThread("three", 1777, receivedMessages);
-
-        one.start();
-        two.start();
-        three.start();
-
+        IMessageReceiver rcv = new UDPMessageReceiver();
+        IMessageSender snd = new UDPMessageSender();
         Scanner scan = new Scanner(System.in);
-        int cnt = 0;
-        while (true) {
-            System.out.println( ">>" );
-            String inpStr =  scan.nextLine();
+        Charset cset = Charset.defaultCharset();
 
-            ListIterator<String> itr = receivedMessages.listIterator();
-            while ( itr.hasNext()) {
-                String str = itr.next();
-                System.out.println();
+        try {
+            System.out.println("Проектное задание - крипто мсессенджер. Модули 8-11. Используются UDP сокеты.");
+            System.out.println("1 сообщение на 1 пакет. Длинна сообщения до 70 символов.");
+            System.out.println("Peer2Peer соединение без отдельного сервера.");
+            System.out.println("Теоретически должно работать с белыми IP.");
+            System.out.println("Введите @quit для выхода из чата.");
+
+            System.out.println("Введите порт своего сервера:");
+            String fromPortStr = scan.nextLine();
+            fromPort = Integer.valueOf(fromPortStr);
+
+            System.out.println("Введите порт IP адрес собеседника:");
+            toAddress = scan.nextLine();
+
+            System.out.println("Введите порт собеседника:");
+            String toPortStr = scan.nextLine();
+            toPort = Integer.valueOf(toPortStr);
+
+            rcv.Initialize(fromPort);
+            snd.Initialize(toAddress, toPort);
+
+            while (true) {
+
+                // получаем все переданные нам, и пока не полученные записи (UDP пакеты) и печатаем их
+                CommunicationMessage msg;
+                do {
+
+                    msg = rcv.ReceiveMessage();
+
+                    // преобразование массив байтов в строку
+                    // Внимание ! используется кодовая страница по умолчанию для этой ОС !
+                    String rcvMsgStr = new String(msg.getMessageData());
+
+                    // выведем полученное сообщение
+                    System.out.println(rcvMsgStr);
+
+                } while ( msg!=null );
+
+                // получили отсылаемую запись от пользователя
+                System.out.println(">>");
+                String sndMsgStr = scan.nextLine();
+
+                // проверим на наличие команды
+                if( sndMsgStr.equals("@quit")) {
+                    break;
+                }
+
+                // сконвертим строку в байты
+                // Внимание ! используется кодовая страница по умолчанию для этой ОС !
+                byte[] sndMsgBuffer = sndMsgStr.getBytes();
+
+                // вышлем сообщение
+                snd.SendMessage(sndMsgBuffer);
             }
-
-            cnt++;
-            if (cnt>10) break;
         }
-
+        catch(Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+        finally {
+            snd.Done();
+            rcv.Done();
+        }
     }
 }

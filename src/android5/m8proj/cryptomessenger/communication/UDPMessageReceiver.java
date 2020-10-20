@@ -1,6 +1,5 @@
 package android5.m8proj.cryptomessenger.communication;
 
-import java.io.IOException;
 import java.net.*;
 
 public class UDPMessageReceiver implements IMessageReceiver {
@@ -14,7 +13,7 @@ public class UDPMessageReceiver implements IMessageReceiver {
     public CommunicationMessage ReceiveMessage() {
 
         if ( thread.isAlive()==false ) {
-            thread.run();
+            thread.start();
         }
 
         if( thread.isReceived() ) {
