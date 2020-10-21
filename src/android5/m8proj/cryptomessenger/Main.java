@@ -12,7 +12,7 @@ public class Main {
 
     public static <ex> void main(String[] args) throws InterruptedException, SocketException, UnknownHostException {
 
-        int fromPort, toPort;
+        int srvPort, toPort;
         String toAddress;
 
         IMessageReceiver rcv = new UDPMessageReceiver();
@@ -26,19 +26,20 @@ public class Main {
             System.out.println("Peer2Peer соединение без отдельного сервера.");
             System.out.println("Теоретически должно работать с белыми IP.");
             System.out.println("Введите @quit для выхода из чата.");
+            System.out.println("------------------------------------------------------------------------------");
 
-            System.out.println("Введите порт своего сервера:");
-            String fromPortStr = scan.nextLine();
-            fromPort = Integer.valueOf(fromPortStr);
+            System.out.print("Введите порт своего сервера:");
+            String srvPortStr = scan.nextLine();
+            srvPort = Integer.valueOf(srvPortStr);
 
-            System.out.println("Введите порт IP адрес собеседника:");
+            System.out.print("Введите порт IP адрес собеседника:");
             toAddress = scan.nextLine();
 
-            System.out.println("Введите порт собеседника:");
+            System.out.print("Введите порт собеседника:");
             String toPortStr = scan.nextLine();
             toPort = Integer.valueOf(toPortStr);
 
-            rcv.Initialize(fromPort);
+            rcv.Initialize(srvPort);
             snd.Initialize(toAddress, toPort);
 
             while (true) {
@@ -46,20 +47,19 @@ public class Main {
                 // получаем все переданные нам, и пока не полученные записи (UDP пакеты) и печатаем их
                 CommunicationMessage msg;
                 do {
-
                     msg = rcv.ReceiveMessage();
+                    if( msg!=null ) {
+                        // преобразование массив байтов в строку
+                        // Внимание ! используется кодовая страница по умолчанию для этой ОС !
+                        String rcvMsgStr = new String(msg.getMessageData());
 
-                    // преобразование массив байтов в строку
-                    // Внимание ! используется кодовая страница по умолчанию для этой ОС !
-                    String rcvMsgStr = new String(msg.getMessageData());
-
-                    // выведем полученное сообщение
-                    System.out.println(rcvMsgStr);
-
+                        // выведем полученное сообщение
+                        System.out.println(rcvMsgStr);
+                    }
                 } while ( msg!=null );
 
                 // получили отсылаемую запись от пользователя
-                System.out.println(">>");
+                System.out.print(">>");
                 String sndMsgStr = scan.nextLine();
 
                 // проверим на наличие команды
@@ -67,12 +67,15 @@ public class Main {
                     break;
                 }
 
-                // сконвертим строку в байты
-                // Внимание ! используется кодовая страница по умолчанию для этой ОС !
-                byte[] sndMsgBuffer = sndMsgStr.getBytes();
+                if( sndMsgStr!=null && sndMsgStr.length()>0 ) {
 
-                // вышлем сообщение
-                snd.SendMessage(sndMsgBuffer);
+                    // сконвертим строку в байты
+                    // Внимание ! используется кодовая страница по умолчанию для этой ОС !
+                    byte[] sndMsgBuffer = sndMsgStr.getBytes();
+
+                    // вышлем сообщение
+                    snd.SendMessage(sndMsgBuffer);
+                }
             }
         }
         catch(Exception ex) {

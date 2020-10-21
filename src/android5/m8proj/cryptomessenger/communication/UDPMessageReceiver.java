@@ -8,21 +8,16 @@ public class UDPMessageReceiver implements IMessageReceiver {
 
     public void Initialize(int toPrt) throws SocketException {
         thread = new UDPMsgRcvThread(toPrt);
+        thread.start();
     }
 
     public CommunicationMessage ReceiveMessage() {
-
-        if ( thread.isAlive()==false ) {
-            thread.start();
-        }
-
         if( thread.isReceived() ) {
             CommunicationMessage result = thread.getResult();
             return result;
         } else {
             return null;
         }
-
     }
 
     public void Done() throws InterruptedException {
