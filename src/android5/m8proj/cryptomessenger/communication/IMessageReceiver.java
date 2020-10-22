@@ -5,6 +5,6 @@ import java.net.SocketException;
 
 public interface IMessageReceiver {
     void Initialize(int toPrt) throws SocketException;
-    CommunicationMessage ReceiveMessage() throws IOException;
+    byte[]  ReceiveMessage() throws IOException;
     void Done() throws InterruptedException;
 }

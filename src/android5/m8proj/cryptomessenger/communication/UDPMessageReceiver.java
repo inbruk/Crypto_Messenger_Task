@@ -11,13 +11,8 @@ public class UDPMessageReceiver implements IMessageReceiver {
         thread.start();
     }
 
-    public CommunicationMessage ReceiveMessage() {
-        if( thread.isReceived() ) {
-            CommunicationMessage result = thread.getResult();
-            return result;
-        } else {
-            return null;
-        }
+    public byte[] ReceiveMessage() {
+        return thread.getOnePacketData();
     }
 
     public void Done() throws InterruptedException {

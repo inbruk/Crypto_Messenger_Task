@@ -26,6 +26,8 @@ public class Main {
             System.out.println("Peer2Peer соединение без отдельного сервера.");
             System.out.println("Теоретически должно работать с белыми IP.");
             System.out.println("Введите @quit для выхода из чата.");
+            System.out.println("Если ничего не вводить и просто нажать Enter, то ничего не отсылается,");
+            System.out.println("но все накопленные принятые сообщения печатаются.");
             System.out.println("------------------------------------------------------------------------------");
 
             System.out.print("Введите порт своего сервера:");
@@ -45,18 +47,18 @@ public class Main {
             while (true) {
 
                 // получаем все переданные нам, и пока не полученные записи (UDP пакеты) и печатаем их
-                CommunicationMessage msg;
+                byte[] currPacketData;
                 do {
-                    msg = rcv.ReceiveMessage();
-                    if( msg!=null ) {
+                    currPacketData = rcv.ReceiveMessage();
+                    if( currPacketData!=null ) {
                         // преобразование массив байтов в строку
                         // Внимание ! используется кодовая страница по умолчанию для этой ОС !
-                        String rcvMsgStr = new String(msg.getMessageData());
+                        String rcvMsgStr = new String(currPacketData);
 
                         // выведем полученное сообщение
                         System.out.println(rcvMsgStr);
                     }
-                } while ( msg!=null );
+                } while ( currPacketData!=null );
 
                 // получили отсылаемую запись от пользователя
                 System.out.print(">>");

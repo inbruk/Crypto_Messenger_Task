@@ -10,56 +10,45 @@ import lombok.SneakyThrows;
 
 public class UDPMsgRcvThread extends Thread implements Closeable
 {
+    public final static int MAX_PACKET_BUFFER_SIZE = 32000;
+    private byte[] tempBuffer = new byte[MAX_PACKET_BUFFER_SIZE];
 
     private int toPort;
     private DatagramSocket socket;
-    private byte[] packetBuffer;
 
-    @Getter @Setter
-    private boolean isReceived = false;
-
-    private CommunicationMessage result = null;
-    public CommunicationMessage getResult() {
-        synchronized ( result ) {
-            if (isReceived) {
-                isReceived = false;
-                return result;
-            } else {
-                return null;
-            }
+    private Queue<byte[]> receivedPacketsData = new LinkedList<>();
+    public  byte[] getOnePacketData() {
+        byte[] result;
+        synchronized (receivedPacketsData) {
+            result = receivedPacketsData.poll();
         }
+        return result;
     }
 
     public UDPMsgRcvThread(int toPrt) throws SocketException {
         toPort = toPrt;
         socket = new DatagramSocket(toPort);
-        packetBuffer = new byte[ CommunicationMessage.MAX_PACKET_BUFF_SIZE ];
     }
 
     @SneakyThrows
     public void run() {
         while(true) {
-            synchronized ( result ) {
-                if (isReceived == false) {
-                    DatagramPacket packet = new DatagramPacket(packetBuffer, packetBuffer.length);
-                    socket.receive(packet);
+            DatagramPacket packet = new DatagramPacket(tempBuffer, tempBuffer.length);
+            socket.receive(packet);
 
-                    InetAddress fromAddress = packet.getAddress();
-                    int fromPort = packet.getPort();
-                    result = new CommunicationMessage(
-                            fromAddress.toString(), fromPort, CommunicationMessage.LOCAL_IP_ADDRESS, toPort, packetBuffer
-                    );
-                    isReceived = true;
-                }
+            // InetAddress fromAddress = packet.getAddress();
+            // int fromPort = packet.getPort();
+
+            int byteLength = packet.getLength();
+            byte[] currentPacketBuffer = Arrays.copyOfRange(tempBuffer, 0, byteLength);
+
+            synchronized (receivedPacketsData) {
+                receivedPacketsData.offer(currentPacketBuffer);
             }
-            sleep(300);
         }
     }
 
     public void close() {
-        isReceived = false;
-        result = null;
-        packetBuffer = null;
         socket.close();
     }
 
