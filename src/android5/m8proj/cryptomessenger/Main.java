@@ -1,5 +1,6 @@
 package android5.m8proj.cryptomessenger;
 
+import android5.m8proj.cryptomessenger.cipher.*;
 import android5.m8proj.cryptomessenger.communication.*;
 
 import java.net.SocketException;
@@ -30,19 +31,28 @@ public class Main {
             System.out.println("но все накопленные принятые сообщения печатаются.");
             System.out.println("------------------------------------------------------------------------------");
 
-            System.out.print("Введите порт своего сервера:");
+            System.out.print("Введите порт своего сервера (1000-65536):");
             String srvPortStr = scan.nextLine();
             srvPort = Integer.valueOf(srvPortStr);
 
-            System.out.print("Введите порт IP адрес собеседника:");
+            System.out.print("Введите порт IP адрес собеседника (например, 127.0.0.1):");
             toAddress = scan.nextLine();
 
-            System.out.print("Введите порт собеседника:");
+            System.out.print("Введите порт собеседника (1000-65536):");
             String toPortStr = scan.nextLine();
             toPort = Integer.valueOf(toPortStr);
 
+            System.out.print("Введите наш пароль шифрования:");
+            String encPassword = scan.nextLine();
+
+            System.out.print("Введите пароль шифрования собеседника:");
+            String decPassword = scan.nextLine();
+
             rcv.Initialize(srvPort);
             snd.Initialize(toAddress, toPort);
+
+            IMessageEncryptor encryptor = new StandartEncryptor("AES", encPassword);
+            IMessageDecryptor decryptor = new StandartDecryptor("AES", decPassword);
 
             while (true) {
 
@@ -51,11 +61,7 @@ public class Main {
                 do {
                     currPacketData = rcv.ReceiveMessage();
                     if( currPacketData!=null ) {
-                        // преобразование массив байтов в строку
-                        // Внимание ! используется кодовая страница по умолчанию для этой ОС !
-                        String rcvMsgStr = new String(currPacketData);
-
-                        // выведем полученное сообщение
+                        String rcvMsgStr = decryptor.decryptMessage(currPacketData);
                         System.out.println(rcvMsgStr);
                     }
                 } while ( currPacketData!=null );
@@ -70,12 +76,7 @@ public class Main {
                 }
 
                 if( sndMsgStr!=null && sndMsgStr.length()>0 ) {
-
-                    // сконвертим строку в байты
-                    // Внимание ! используется кодовая страница по умолчанию для этой ОС !
-                    byte[] sndMsgBuffer = sndMsgStr.getBytes();
-
-                    // вышлем сообщение
+                    byte[] sndMsgBuffer = encryptor.encryptMessage(sndMsgStr);
                     snd.SendMessage(sndMsgBuffer);
                 }
             }
