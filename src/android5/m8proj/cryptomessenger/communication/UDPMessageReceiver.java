@@ -16,7 +16,7 @@ public class UDPMessageReceiver implements IMessageReceiver {
     }
 
     public void Done() throws InterruptedException {
-        thread.join();
+        thread.stop();
         thread.close();
     }
 
